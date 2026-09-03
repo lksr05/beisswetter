@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beißwetter Oberrhein – 7-Tage-Prognose</title>
+<style>
+:root{
+  --tiefe:#0c1e22;
+  --wasser:#123036;
+  --wasser-hell:#18424a;
+  --kante:#23545c;
+  --schilf:#d9a441;
+  --welle:#74b8ab;
+  --nebel:#e6eeea;
+  --gedaempft:#8ea9a5;
+  --rost:#b05f45;
+  --gut:#5fbf9b;
+  --mittel:#d9a441;
+  --schlecht:#b05f45;
+  --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(120% 60% at 50% 0%, #163a41 0%, rgba(12,30,34,0) 70%),
+    var(--tiefe);
+  background-attachment:fixed;
+  color:var(--nebel);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:60rem;margin:0 auto;padding:0 1.1rem 4rem}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.01em;margin:0}
+a{color:var(--welle)}
+
+/* Kopf */
+header{padding:2.6rem 0 1.4rem}
+h1{font-size:clamp(2rem,7vw,3.1rem);line-height:1.05}
+.untertitel{color:var(--gedaempft);max-width:46ch;margin:.7rem 0 0;font-size:1.02rem}
+
+/* Steuerleiste */
+.steuer{
+  display:flex;flex-wrap:wrap;gap:.7rem;align-items:flex-end;
+  border-top:1px solid var(--kante);border-bottom:1px solid var(--kante);
+  padding:1rem 0;margin:1.6rem 0 0;
+}
+.feld{display:flex;flex-direction:column;gap:.28rem;min-width:0}
+.feld label{font-size:.8rem;color:var(--gedaempft);letter-spacing:.01em}
+select,input[type=number],button{
+  font-family:var(--sans);font-size:.95rem;color:var(--nebel);
+  background:var(--wasser);border:1px solid var(--kante);border-radius:3px;
+  padding:.45rem .6rem;min-height:2.4rem;
+}
+select{max-width:min(20rem,68vw)}
+input[type=number]{width:6.5rem}
+button{cursor:pointer;background:var(--wasser-hell)}
+button:hover{border-color:var(--welle)}
+:focus-visible{outline:2px solid var(--schilf);outline-offset:2px}
+
+.arten{display:flex;flex-wrap:wrap;gap:.4rem;padding:.9rem 0 0}
+.art{
+  border:1px solid var(--kante);background:transparent;border-radius:999px;
+  padding:.34rem .82rem;font-size:.9rem;color:var(--gedaempft);min-height:0;
+}
+.art[aria-pressed=true]{background:var(--schilf);border-color:var(--schilf);color:#20180a;font-weight:600}
+
+.ortszeile{color:var(--gedaempft);font-size:.87rem;padding:.75rem 0 0}
+.ortszeile strong{color:var(--nebel);font-weight:600}
+
+/* Wochenkurve */
+.kurve{margin:2.2rem 0 .4rem}
+.kurve svg{width:100%;height:auto;display:block;overflow:visible}
+.kurve text{font-family:var(--sans)}
+.kurve text.wert{font-family:var(--serif)}
+.kurve-legende{display:flex;gap:1.1rem;flex-wrap:wrap;color:var(--gedaempft);font-size:.82rem;margin-top:.5rem}
+.kurve-legende span{display:flex;align-items:center;gap:.35rem}
+.punkt{width:.62rem;height:.62rem;border-radius:2px;display:inline-block}
+
+/* Tagesliste */
+.tage{margin-top:2.4rem;border-top:1px solid var(--kante)}
+.tag{border-bottom:1px solid var(--kante)}
+.tagkopf{
+  width:100%;display:grid;grid-template-columns:3.3rem 1fr auto;gap:.9rem;align-items:center;
+  background:none;border:0;border-radius:0;padding:1rem .2rem;text-align:left;color:inherit;
+}
+.tagkopf:hover{background:rgba(116,184,171,.06)}
+.pegelbalken{position:relative;height:3.4rem;width:100%;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.pegelbalken i{position:absolute;left:0;right:0;bottom:0;display:block}
+.zahl{font-family:var(--serif);font-size:1.75rem;line-height:1;font-variant-numeric:tabular-nums}
+.datum{font-family:var(--serif);font-size:1.16rem}
+.urteil{font-size:.88rem;color:var(--gedaempft);margin-top:.15rem}
+.chips{display:flex;flex-wrap:wrap;gap:.32rem;margin-top:.45rem}
+.chip{font-size:.78rem;padding:.16rem .5rem;border-radius:3px;background:rgba(255,255,255,.06);color:var(--gedaempft);border-left:2px solid var(--gedaempft)}
+.chip.plus{border-left-color:var(--gut);color:#bfe6d7}
+.chip.minus{border-left-color:var(--rost);color:#e5bcae}
+.pfeil{color:var(--gedaempft);font-size:1.3rem;line-height:1;transition:transform .18s ease}
+.tag[data-offen=true] .pfeil{transform:rotate(90deg)}
+
+.detail{display:none;padding:.2rem .2rem 1.5rem}
+.tag[data-offen=true] .detail{display:block}
+.stunden{display:flex;align-items:flex-end;gap:2px;height:5.5rem;margin:.4rem 0 .3rem}
+.stunden div{flex:1;border-radius:1px 1px 0 0;min-height:2px}
+.stundenachse{display:flex;justify-content:space-between;color:var(--gedaempft);font-size:.74rem;font-variant-numeric:tabular-nums}
+.werte{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:.1rem 1.4rem;margin-top:1.1rem}
+.wert{display:flex;justify-content:space-between;gap:.8rem;padding:.32rem 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:.9rem}
+.wert span:first-child{color:var(--gedaempft)}
+.wert span:last-child{font-variant-numeric:tabular-nums;text-align:right}
+.fenster{font-size:.92rem;margin-top:.9rem;color:var(--nebel)}
+.fenster b{font-family:var(--serif);font-size:1.05rem;color:var(--schilf)}
+
+/* Zustände */
+.zustand{padding:3rem 0;color:var(--gedaempft);font-size:1rem;max-width:48ch}
+.zustand b{color:var(--nebel);display:block;font-family:var(--serif);font-size:1.15rem;margin-bottom:.3rem}
+
+/* Erklärung */
+.erklaerung{margin-top:3.2rem;border-top:1px solid var(--kante);padding-top:2rem}
+.erklaerung h2{font-size:1.5rem}
+.erklaerung p{max-width:70ch;color:#c9dad6}
+.faktoren{margin:1.4rem 0 0;padding:0;list-style:none}
+.faktoren li{padding:.75rem 0;border-bottom:1px solid rgba(255,255,255,.08);max-width:70ch}
+.faktoren b{font-family:var(--serif);font-size:1.05rem;font-weight:600}
+.faktoren em{font-style:normal;color:var(--gedaempft);font-size:.83rem;font-variant-numeric:tabular-nums}
+.faktoren p{margin:.2rem 0 0;font-size:.93rem;color:var(--gedaempft)}
+.kleingedruckt{margin-top:2rem;font-size:.85rem;color:var(--gedaempft);max-width:70ch}
+
+@media (max-width:640px){
+  .tagkopf{grid-template-columns:2.6rem 1fr auto;gap:.7rem}
+  .zahl{font-size:1.5rem}
+  .steuer{gap:.6rem}
+  select{max-width:100%}
+  .feld.breit{flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Beißwetter am Oberrhein</h1>
+  <p class="untertitel">Sieben Tage Wetter für Altrhein, Baggerseen und Strom – umgerechnet in eine Einschätzung, wann sich das Losfahren lohnt.</p>
+
+  <div class="steuer">
+    <div class="feld breit">
+      <label for="ort">Gewässer</label>
+      <select id="ort"></select>
+    </div>
+    <div class="feld">
+      <label for="wasser">Wassertemp. °C</label>
+      <input type="number" id="wasser" placeholder="auto" step="0.5" min="0" max="32">
+    </div>
+    <div class="feld">
+      <label for="standort">&nbsp;</label>
+      <button id="standort" type="button">Mein Standort</button>
+    </div>
+  </div>
+
+  <div class="arten" id="arten" role="group" aria-label="Zielfisch"></div>
+  <p class="ortszeile" id="ortszeile"></p>
+</header>
+
+<main id="inhalt">
+  <div class="zustand" id="zustand"><b>Daten werden geladen</b>Wetterdaten kommen von Open-Meteo, ohne Anmeldung und ohne Schlüssel.</div>
+</main>
+
+<section class="erklaerung">
+  <h2>Woraus sich das Urteil zusammensetzt</h2>
+  <p>Der Wert pro Tag ist keine Messung, sondern ein gewichtetes Modell aus Wetterdaten und dem, was in der Angelliteratur und -praxis über Fischaktivität bekannt ist. Fische sind wechselwarm, orientieren sich stark am Licht und reagieren empfindlich auf Druck- und Sauerstoffänderungen – genau da setzen die Faktoren an. Für jede Stunde wird ein Wert berechnet, der Tageswert besteht je zur Hälfte aus dem besten Drei-Stunden-Fenster und aus dem Tagesdurchschnitt. Ein Tag mit einer starken Dämmerungsphase schlägt also einen gleichmäßig mittelmäßigen.</p>
+  <ul class="faktoren" id="gewichte"></ul>
+  <p class="kleingedruckt">Wetter: Open-Meteo (ICON-D2/EU). Pegel: PEGELONLINE der Wasserstraßen- und Schifffahrtsverwaltung, nur zur Information, nicht im Score. Die Wassertemperatur ist geschätzt aus der Lufttemperatur der letzten Tage – wer einen echten Messwert hat, trägt ihn oben ein, das verschiebt die Bewertung deutlich. Schonzeiten, Mindestmaße, Nachtangelverbote und Gewässerordnung stehen über jeder Prognose. Bei Hochwasser und starker Strömung am Strom: nicht raus.</p>
+</section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Gewässer ---------- */
+const ORTE = [
+  {n:"Altrhein Plittersdorf / Rastatt", lat:48.905, lon:8.117, pegel:"PLITTERSDORF"},
+  {n:"Altrhein Neupotz – Wörth",        lat:49.083, lon:8.281, pegel:"MAXAU"},
+  {n:"Rhein Karlsruhe-Maxau",           lat:49.039, lon:8.306, pegel:"MAXAU"},
+  {n:"Rhein Speyer",                    lat:49.317, lon:8.437, pegel:"SPEYER"},
+  {n:"Rheinau – Freistett",             lat:48.667, lon:7.928, pegel:"KEHL-KRONENHOF"},
+  {n:"Taubergießen / Rust",             lat:48.263, lon:7.727, pegel:null},
+  {n:"Rhinau (F)",                      lat:48.324, lon:7.706, pegel:null},
+  {n:"Plobsheim / Stausee (F)",         lat:48.478, lon:7.717, pegel:null},
+  {n:"Lauterbourg (F)",                 lat:48.972, lon:8.183, pegel:"MAXAU"},
+  {n:"Breisach am Rhein",               lat:48.030, lon:7.578, pegel:"BREISACH"},
+  {n:"Altrhein Hartheim – Fessenheim",  lat:47.918, lon:7.545, pegel:"BREISACH"},
+  {n:"Kembs / Petite Camargue (F)",     lat:47.687, lon:7.505, pegel:null},
+];
+
+/* ---------- Zielfische ---------- */
+const ARTEN = {
+  hecht:    {n:"Hecht",       wOpt:[6,16],  weich:7, licht:"scheu", nacht:0.35, mittag:0.48, druck:"fallend", gw:{druck:.22,dabs:.05,licht:.14,wind:.14,regen:.09,wasser:.17,sprung:.06,tag:.08,mond:.05}},
+  zander:   {n:"Zander",      wOpt:[10,22], weich:7, licht:"sehr scheu", nacht:0.80, mittag:0.35, druck:"fallend", gw:{druck:.20,dabs:.05,licht:.17,wind:.13,regen:.08,wasser:.16,sprung:.05,tag:.11,mond:.05}},
+  barsch:   {n:"Barsch",      wOpt:[10,21], weich:7, licht:"mittel", nacht:0.22, mittag:0.62, druck:"fallend", gw:{druck:.19,dabs:.05,licht:.12,wind:.15,regen:.09,wasser:.18,sprung:.06,tag:.11,mond:.05}},
+  karpfen:  {n:"Karpfen",     wOpt:[17,26], weich:6, licht:"sonne ok", nacht:0.78, mittag:0.72, druck:"stabil",  gw:{druck:.17,dabs:.08,licht:.09,wind:.11,regen:.09,wasser:.25,sprung:.07,tag:.09,mond:.05}},
+  friedfisch:{n:"Brassen & Rotauge",wOpt:[12,24],weich:7,licht:"mittel",nacht:0.42,mittag:0.75,druck:"stabil", gw:{druck:.17,dabs:.08,licht:.10,wind:.13,regen:.09,wasser:.22,sprung:.07,tag:.09,mond:.05}},
+  wels:     {n:"Wels",        wOpt:[20,27], weich:6, licht:"scheu", nacht:0.93, mittag:0.32, druck:"fallend", gw:{druck:.20,dabs:.05,licht:.10,wind:.10,regen:.11,wasser:.24,sprung:.06,tag:.09,mond:.05}},
+};
+
+const GEWICHT_TEXT = [
+  ["druck","Luftdrucktendenz über 24 Stunden","Der stärkste Einzelfaktor. Fallender Druck vor einer Front bringt Raubfische in Bewegung; ein schneller Anstieg nach dem Frontdurchgang stellt das Beißen oft für ein bis zwei Tage ab. Friedfische mögen es umgekehrt eher ruhig und stabil."],
+  ["wasser","Wassertemperatur","Bestimmt den Stoffwechsel und damit den Grundbedarf an Nahrung. Jede Art hat ihr Fenster: Hecht mag es kühl, Wels und Karpfen brauchen Wärme. Wird aus der Lufttemperatur der Vortage geschätzt oder manuell gesetzt."],
+  ["licht","Bewölkung und Lichtstärke","Zander und Hecht jagen mit Lichtvorteil. Bedeckter Himmel zieht die Beißzeit über den ganzen Tag, greller Sonnenschein drückt sie in die Dämmerung. Bei Karpfen im kühlen Wasser dreht sich das Vorzeichen um."],
+  ["wind","Windstärke und Richtung","Leichter bis mäßiger Wind bringt Sauerstoff ein, trübt die Oberfläche und treibt Plankton an eine Uferseite – dahinter steht das Futterfisch. Flaute und Sturm sind beide schlecht. West- und Südwind schneiden besser ab als Ostwind, die alte Regel hat empirisch schwache, aber nicht null Grundlage."],
+  ["tag","Tageszeit und Dämmerung","Die Stunde um Sonnenaufgang und Sonnenuntergang ist bei fast allen Arten die produktivste. Zander und Wels laufen zusätzlich nachts, Karpfen und Brassen auch mittags."],
+  ["regen","Niederschlag","Leichter Regen ist ein Plus: gedämpftes Licht, Sauerstoffeintrag, eingespülte Nahrung. Dauerregen und Starkregen trüben den Strom ein und lassen den Pegel steigen, das kostet Punkte."],
+  ["sprung","Temperatursprung zum Vortag","Ein Einbruch von mehreren Grad legt die Aktivität für ein bis zwei Tage lahm, bis sich das Wasser angepasst hat. Langsame Erwärmung im Frühjahr wirkt dagegen anschiebend."],
+  ["dabs","Absoluter Luftdruck","Schwächer als die Tendenz, aber Hochdrucklagen um 1015 bis 1022 hPa sind für Friedfische verlässlicher als tiefe Tiefdrucklagen."],
+  ["mond","Mondphase und Solunar","Der am schwächsten belegte Faktor, deshalb nur 5 % Gewicht. Voll- und Neumond sowie die Zeiten des Mondhöchststands gelten als aktive Phasen; die Mondkulmination ist hier genähert."],
+];
+
+/* ---------- Hilfen ---------- */
+const clamp01=x=>Math.max(0,Math.min(1,x));
+function interp(x,pts){
+  if(x<=pts[0][0])return pts[0][1];
+  if(x>=pts[pts.length-1][0])return pts[pts.length-1][1];
+  for(let i=1;i<pts.length;i++){
+    if(x<=pts[i][0]){
+      const [x0,y0]=pts[i-1],[x1,y1]=pts[i];
+      return y0+(y1-y0)*(x-x0)/(x1-x0);
+    }
+  }
+  return pts[pts.length-1][1];
+}
+function fenster(x,lo,hi,weich){
+  if(x>=lo&&x<=hi)return 1;
+  const d=x<lo?lo-x:x-hi;
+  return clamp01(1-d/weich);
+}
+const num=(v,d=0)=>v==null||isNaN(v)?"–":v.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
+function himmelsrichtung(g){
+  const r=["N","NO","O","SO","S","SW","W","NW"];
+  return r[Math.round(((g%360)+360)%360/45)%8];
+}
+function farbe(s){
+  if(s>=76)return "#5fbf9b";
+  if(s>=60)return "#8fc77e";
+  if(s>=45)return "#d9a441";
+  if(s>=30)return "#c47d4f";
+  return "#b05f45";
+}
+function urteil(s){
+  if(s>=78)return "Fahr hin";
+  if(s>=64)return "Guter Tag";
+  if(s>=50)return "Solide, mit Fenster";
+  if(s>=36)return "Zäh, aber machbar";
+  return "Lieber Gerät putzen";
+}
+
+/* ---------- Mond ---------- */
+function mondphase(d){ // 0 = Neumond, 0.5 = Vollmond
+  const synod=29.530588853, ref=Date.UTC(2000,0,6,18,14);
+  return (((d.getTime()-ref)/86400000/synod)%1+1)%1;
+}
+
+/* ---------- Faktoren ---------- */
+function druckTendenzWert(dp,typ){
+  const fallend=[[-14,.22],[-8,.68],[-4,1],[-2,.98],[-.7,.86],[0,.76],[1,.62],[3,.44],[6,.3],[14,.22]];
+  const stabil =[[-14,.2],[-8,.45],[-4,.66],[-1.5,.9],[0,1],[1.5,.92],[4,.68],[8,.42],[14,.24]];
+  return interp(dp,typ==="fallend"?fallend:stabil);
+}
+function lichtWert(wolken,tag,art,wassertemp){
+  if(!tag)return .8;
+  if(art.licht==="sehr scheu")return interp(wolken,[[0,.3],[30,.52],[60,.85],[85,1],[100,.97]]);
+  if(art.licht==="scheu")     return interp(wolken,[[0,.4],[30,.6],[60,.88],[85,1],[100,.95]]);
+  if(art.licht==="sonne ok")  return wassertemp<17
+        ? interp(wolken,[[0,1],[40,.9],[70,.75],[100,.62]])
+        : interp(wolken,[[0,.6],[40,.85],[75,1],[100,.9]]);
+  return interp(wolken,[[0,.55],[35,.78],[65,1],[90,.95],[100,.85]]);
+}
+function windWert(v,ri,boe){
+  let s=interp(v,[[0,.48],[4,.7],[8,.9],[14,1],[22,.96],[30,.72],[40,.46],[55,.2],[80,.12]]);
+  const rad=((ri-225)*Math.PI)/180;
+  s*=1+.09*Math.cos(rad);
+  if(boe>50)s*=.85;
+  if(boe>70)s*=.8;
+  return clamp01(s);
+}
+function regenWert(mm){
+  return interp(mm,[[0,.72],[.15,.93],[.6,1],[2,.86],[5,.62],[10,.42],[20,.28]]);
+}
+function tageszeitWert(zeit,auf,unter,art){
+  const m=zeit.getHours()*60+zeit.getMinutes();
+  const mA=auf.getHours()*60+auf.getMinutes(), mU=unter.getHours()*60+unter.getMinutes();
+  const dA=Math.abs(m-mA), dU=Math.abs(m-mU);
+  const naehe=Math.min(dA,dU);
+  if(naehe<=80)return 1;
+  if(naehe<=150)return interp(naehe,[[80,1],[150,.82]]);
+  const istTag=m>mA&&m<mU;
+  if(istTag){
+    const mitte=(mA+mU)/2;
+    const t=Math.abs(m-mitte)/Math.max(1,(mU-mA)/2);
+    return art.mittag+(0.82-art.mittag)*t;
+  }
+  return art.nacht;
+}
+function mondWert(zeit,phase){
+  const kulm=(12+24*phase)%24;
+  const h=zeit.getHours()+zeit.getMinutes()/60;
+  const abst=d=>{let x=Math.abs(h-d);return Math.min(x,24-x);};
+  const gross=Math.min(abst(kulm),abst((kulm+12)%24));
+  const klein=Math.min(abst((kulm+6)%24),abst((kulm+18)%24));
+  let s=.55;
+  if(gross<=1)s=1; else if(gross<=2)s=.8;
+  else if(klein<=.75)s=.78; else if(klein<=1.5)s=.66;
+  const nahAmRand=Math.min(phase,1-phase,Math.abs(phase-.5));
+  s+=nahAmRand<.06?.1:0;
+  return clamp01(s);
+}
+
+/* ---------- Zustand ---------- */
+let state={ort:ORTE[0], art:"hecht", wasserManuell:null, daten:null};
+
+/* ---------- Daten holen ---------- */
+async function laden(){
+  const {lat,lon}=state.ort;
+  const q=new URLSearchParams({
+    latitude:String(lat), longitude:String(lon),
+    hourly:"temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day",
+    daily:"weather_code,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunrise,sunset",
+    timezone:"Europe/Berlin", past_days:"7", forecast_days:"7", wind_speed_unit:"kmh"
+  }).toString();
+  const url="https://api.open-meteo.com/v1/forecast?"+q;
+  const r=await fetch(url);
+  if(!r.ok)throw new Error("Wetterdienst antwortet nicht ("+r.status+")");
+  return r.json();
+}
+
+async function pegelLaden(station){
+  if(!station)return null;
+  try{
+    const r=await fetch(`https://pegelonline.wsv.de/webservices/rest-api/v2/stations/${station}/W/measurements.json?start=P2D`);
+    if(!r.ok)return null;
+    const m=await r.json();
+    if(!Array.isArray(m)||m.length<2)return null;
+    const jetzt=m[m.length-1], vor=m[Math.max(0,m.length-49)];
+    return {station, wert:jetzt.value, delta:jetzt.value-vor.value, zeit:new Date(jetzt.timestamp)};
+  }catch(e){return null;}
+}
+
+/* ---------- Modell ---------- */
+function rechnen(d){
+  const art=ARTEN[state.art];
+  const H=d.hourly, D=d.daily;
+  const zeiten=H.time.map(t=>new Date(t));
+  const heute=new Date(); heute.setHours(0,0,0,0);
+  const start=zeiten.findIndex(t=>t>=heute);
+
+  // Wassertemperatur schätzen: gedämpfter gleitender Mittelwert der Lufttemperatur
+  const tagesmittel=D.temperature_2m_mean;
+  const wasserReihe=[];
+  let w=tagesmittel.slice(0,3).reduce((a,b)=>a+b,0)/3;
+  for(let i=0;i<tagesmittel.length;i++){
+    w=w+0.20*(tagesmittel[i]-w);
+    wasserReihe.push(Math.max(1.5,Math.min(28,w)));
+  }
+  const tagIndexHeute=D.time.findIndex(t=>t===H.time[start].slice(0,10));
+
+  const tage=[];
+  for(let k=0;k<7;k++){
+    const di=tagIndexHeute+k;
+    if(di>=D.time.length)break;
+    const datum=new Date(D.time[di]+"T12:00:00");
+    const auf=new Date(D.sunrise[di]), unter=new Date(D.sunset[di]);
+    const wassertemp=state.wasserManuell!=null?state.wasserManuell:wasserReihe[di];
+    const phase=mondphase(datum);
+
+    const sprung=di>0?D.temperature_2m_mean[di]-D.temperature_2m_mean[di-1]:0;
+    const sprungWert=interp(sprung,[[-12,.32],[-7,.52],[-3.5,.8],[-1,.97],[0,1],[2,.99],[5,.92],[9,.8],[14,.7]]);
+
+    const stunden=[];
+    for(let h=0;h<24;h++){
+      const idx=start+k*24+h;
+      if(idx>=zeiten.length||idx<24)continue;
+      const zeit=zeiten[idx];
+      const p=H.pressure_msl[idx], p24=H.pressure_msl[idx-24];
+      const dp=p-p24;
+      const f={
+        druck: druckTendenzWert(dp, art.druck),
+        dabs:  interp(p,[[985,.45],[1000,.7],[1010,.92],[1017,1],[1025,.9],[1035,.7]]),
+        licht: lichtWert(H.cloud_cover[idx], H.is_day[idx]===1, art, wassertemp),
+        wind:  windWert(H.wind_speed_10m[idx],H.wind_direction_10m[idx],H.wind_gusts_10m[idx]),
+        regen: regenWert(H.precipitation[idx]),
+        wasser:fenster(wassertemp,art.wOpt[0],art.wOpt[1],art.weich),
+        sprung:sprungWert,
+        tag:   tageszeitWert(zeit,auf,unter,art),
+        mond:  mondWert(zeit,phase),
+      };
+      let roh=0;
+      for(const key in art.gw)roh+=art.gw[key]*f[key];
+      const s=clamp01((roh-0.48)/0.44)*100;
+      stunden.push({h,zeit,s,f,dp,
+        temp:H.temperature_2m[idx], wolken:H.cloud_cover[idx],
+        wind:H.wind_speed_10m[idx], wri:H.wind_direction_10m[idx],
+        regenmm:H.precipitation[idx], druck:p});
+    }
+    if(!stunden.length)continue;
+
+    // bestes 3-Stunden-Fenster
+    let best={s:-1,i:0};
+    for(let i=0;i+2<stunden.length;i++){
+      const m=(stunden[i].s+stunden[i+1].s+stunden[i+2].s)/3;
+      if(m>best.s)best={s:m,i};
+    }
+    const relevant=stunden.filter(x=>x.h>=4&&x.h<=23);
+    const mittel=relevant.reduce((a,b)=>a+b.s,0)/relevant.length;
+    let score=0.5*best.s+0.5*mittel;
+    if(D.precipitation_sum[di]>25)score*=0.87;
+    if(D.wind_gusts_10m_max[di]>65)score*=0.9;
+
+    tage.push({
+      datum, di, stunden, score:Math.round(clamp01(score/100)*100),
+      fenster:[stunden[best.i].zeit,stunden[best.i+2].zeit],
+      auf, unter, wassertemp, phase, sprung,
+      tmax:D.temperature_2m_max[di], tmin:D.temperature_2m_min[di],
+      regen:D.precipitation_sum[di], regenP:D.precipitation_probability_max[di],
+      windmax:D.wind_speed_10m_max[di], boe:D.wind_gusts_10m_max[di],
+      wri:D.wind_direction_10m_dominant[di],
+      dp:stunden[Math.min(12,stunden.length-1)].dp,
+      wolkenMittel:stunden.reduce((a,b)=>a+b.wolken,0)/stunden.length,
+    });
+  }
+  return tage;
+}
+
+/* ---------- Chips ---------- */
+function chips(tag){
+  const art=ARTEN[state.art];
+  const mittel={};
+  for(const key in art.gw)mittel[key]=tag.stunden.reduce((a,b)=>a+b.f[key],0)/tag.stunden.length;
+  const text={
+    druck: tag.dp<-1.5?`Druck fällt ${num(tag.dp,1)} hPa`:tag.dp>1.5?`Druck steigt +${num(tag.dp,1)} hPa`:"Druck stabil",
+    dabs:  `${num(tag.stunden[0].druck,0)} hPa`,
+    licht: tag.wolkenMittel>70?`bedeckt ${num(tag.wolkenMittel)} %`:tag.wolkenMittel<30?`klar ${num(tag.wolkenMittel)} %`:`wechselnd ${num(tag.wolkenMittel)} %`,
+    wind:  `${himmelsrichtung(tag.wri)} ${num(tag.windmax)} km/h`,
+    regen: tag.regen<0.2?"trocken":`${num(tag.regen,1)} mm Regen`,
+    wasser:`Wasser ~${num(tag.wassertemp,1)} °C`,
+    sprung:tag.sprung<-2?`${num(tag.sprung,1)} K kälter`:tag.sprung>2?`+${num(tag.sprung,1)} K wärmer`:"gleichbleibend warm",
+    tag:   "Dämmerungsphase",
+    mond:  tag.phase<.06||tag.phase>.94?"Neumond":Math.abs(tag.phase-.5)<.06?"Vollmond":"Halbmond",
+  };
+  const rang=Object.keys(art.gw).map(k=>({k,g:art.gw[k]*(mittel[k]-0.68),v:mittel[k]}))
+    .filter(x=>x.k!=="tag"&&x.k!=="dabs")
+    .sort((a,b)=>b.g-a.g);
+  const out=[];
+  rang.slice(0,2).forEach(x=>{if(x.g>0.005)out.push({t:text[x.k],c:"plus"})});
+  rang.slice(-2).reverse().forEach(x=>{if(x.g<-0.008)out.push({t:text[x.k],c:"minus"})});
+  return out.slice(0,4);
+}
+
+/* ---------- Wochenkurve ---------- */
+function kurveSVG(tage){
+  const mob=window.innerWidth<680;
+  const W=1000,H=mob?330:210,padU=mob?40:26,fs=mob?2:1;
+  const alle=[];
+  tage.forEach((t,i)=>t.stunden.forEach(s=>alle.push({x:i*24+s.h,y:s.s,tag:i,h:s.h,zeit:s.zeit})));
+  const maxX=tage.length*24;
+  const px=x=>x/maxX*W, py=y=>H-padU-(y/100)*(H-padU-14);
+  let d="",flaeche=`M ${px(alle[0].x)} ${H-padU} `;
+  alle.forEach((p,i)=>{
+    const X=px(p.x),Y=py(p.y);
+    d+=(i?"L":"M")+X+" "+Y+" ";
+    flaeche+="L "+X+" "+Y+" ";
+  });
+  flaeche+=`L ${px(alle[alle.length-1].x)} ${H-padU} Z`;
+
+  // Nachtbänder
+  let naechte="";
+  tage.forEach((t,i)=>{
+    const auf=t.auf.getHours()+t.auf.getMinutes()/60;
+    const unter=t.unter.getHours()+t.unter.getMinutes()/60;
+    naechte+=`<rect x="${px(i*24)}" y="8" width="${px(auf)-px(0)}" height="${H-padU-8}" fill="#071417" opacity=".55"/>`;
+    naechte+=`<rect x="${px(i*24+unter)}" y="8" width="${px(24-unter)-px(0)}" height="${H-padU-8}" fill="#071417" opacity=".55"/>`;
+  });
+
+  let raster="",label="";
+  tage.forEach((t,i)=>{
+    raster+=`<line x1="${px(i*24)}" y1="8" x2="${px(i*24)}" y2="${H-padU}" stroke="#23545c" stroke-width="1"/>`;
+    const wt=t.datum.toLocaleDateString("de-DE",{weekday:"short"});
+    label+=`<text x="${px(i*24+12)}" y="${H-(mob?12:8)}" fill="#8ea9a5" font-size="${13*fs}" text-anchor="middle">${i===0?"heute":wt}</text>`;
+    label+=`<text x="${px(i*24+12)}" y="${py(t.score)-(mob?14:9)}" fill="${farbe(t.score)}" font-size="${15*fs}" font-weight="600" text-anchor="middle" class="wert">${t.score}</text>`;
+  });
+
+  const linie=[70,40].map(v=>`<line x1="0" y1="${py(v)}" x2="${W}" y2="${py(v)}" stroke="#ffffff" stroke-opacity=".08" stroke-dasharray="3 5"/>`).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf der Beißwahrscheinlichkeit über sieben Tage">
+    <defs>
+      <linearGradient id="fl" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#74b8ab" stop-opacity=".42"/>
+        <stop offset="100%" stop-color="#74b8ab" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${naechte}${linie}${raster}
+    <path d="${flaeche}" fill="url(#fl)"/>
+    <path d="${d}" fill="none" stroke="#a8ded1" stroke-width="${mob?3:2}" stroke-linejoin="round" class="linie"/>
+    <line x1="0" y1="${H-padU}" x2="${W}" y2="${H-padU}" stroke="#23545c"/>
+    ${label}
+  </svg>`;
+}
+
+/* ---------- Ausgabe ---------- */
+function zeichnen(tage){
+  const inhalt=document.getElementById("inhalt");
+  const beste=[...tage].sort((a,b)=>b.score-a.score)[0];
+  const art=ARTEN[state.art];
+
+  let html=`<section class="kurve">${kurveSVG(tage)}
+    <div class="kurve-legende">
+      <span><i class="punkt" style="background:#071417;border:1px solid #23545c"></i>Nacht</span>
+      <span><i class="punkt" style="background:#a8ded1"></i>Beißwert je Stunde</span>
+      <span>Bester Tag: ${beste.datum.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})} mit ${beste.score}</span>
+    </div></section>`;
+
+  html+=`<div class="tage">`;
+  tage.forEach((t,i)=>{
+    const c=farbe(t.score);
+    const f=t.fenster;
+    const ende=new Date(f[1].getTime()+3600000);
+    html+=`<article class="tag" data-i="${i}" data-offen="false">
+      <button class="tagkopf" type="button" aria-expanded="false">
+        <span class="pegelbalken"><i style="height:${t.score}%;background:${c}"></i></span>
+        <span>
+          <span class="datum">${i===0?"Heute":t.datum.toLocaleDateString("de-DE",{weekday:"long"})}, ${t.datum.toLocaleDateString("de-DE",{day:"numeric",month:"short"})}</span>
+          <span class="urteil">${urteil(t.score)} · ${num(t.tmin)}–${num(t.tmax)} °C · bestes Fenster ${f[0].getHours()}–${ende.getHours()} Uhr</span>
+          <span class="chips">${chips(t).map(c=>`<span class="chip ${c.c}">${c.t}</span>`).join("")}</span>
+        </span>
+        <span style="display:flex;align-items:center;gap:.6rem">
+          <span class="zahl" style="color:${c}">${t.score}</span>
+          <span class="pfeil">›</span>
+        </span>
+      </button>
+      <div class="detail">
+        <div class="stunden">${t.stunden.map(s=>`<div style="height:${Math.max(3,s.s)}%;background:${farbe(s.s)};opacity:${s.s<25?.45:.9}" title="${s.h}:00 – ${Math.round(s.s)}"></div>`).join("")}</div>
+        <div class="stundenachse"><span>0</span><span>6</span><span>12</span><span>18</span><span>23 Uhr</span></div>
+        <p class="fenster">Beste Zeit am ${t.datum.toLocaleDateString("de-DE",{weekday:"long"})}: <b>${f[0].getHours()}–${ende.getHours()} Uhr</b> · Sonne ${t.auf.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} bis ${t.unter.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}</p>
+        <div class="werte">
+          <div class="wert"><span>Luftdruck 24 h</span><span>${t.dp>0?"+":""}${num(t.dp,1)} hPa</span></div>
+          <div class="wert"><span>Bewölkung</span><span>${num(t.wolkenMittel)} %</span></div>
+          <div class="wert"><span>Wind</span><span>${himmelsrichtung(t.wri)} ${num(t.windmax)} km/h</span></div>
+          <div class="wert"><span>Böen</span><span>${num(t.boe)} km/h</span></div>
+          <div class="wert"><span>Niederschlag</span><span>${num(t.regen,1)} mm · ${num(t.regenP)} %</span></div>
+          <div class="wert"><span>Wasser geschätzt</span><span>${num(t.wassertemp,1)} °C</span></div>
+          <div class="wert"><span>Temperatursprung</span><span>${t.sprung>0?"+":""}${num(t.sprung,1)} K</span></div>
+          <div class="wert"><span>Mond</span><span>${num(t.phase*100)} % im Zyklus</span></div>
+          <div class="wert"><span>Optimum ${art.n}</span><span>${art.wOpt[0]}–${art.wOpt[1]} °C</span></div>
+        </div>
+      </div>
+    </article>`;
+  });
+  html+=`</div>`;
+  inhalt.innerHTML=html;
+
+  inhalt.querySelectorAll(".tagkopf").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const a=b.closest(".tag");
+      const offen=a.dataset.offen==="true";
+      a.dataset.offen=String(!offen);
+      b.setAttribute("aria-expanded",String(!offen));
+    });
+  });
+
+  const linie=inhalt.querySelector(".linie");
+  if(linie&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const l=linie.getTotalLength();
+    linie.style.strokeDasharray=l; linie.style.strokeDashoffset=l;
+    linie.animate([{strokeDashoffset:l},{strokeDashoffset:0}],{duration:1400,easing:"ease-out",fill:"forwards"});
+  }
+}
+
+/* ---------- Steuerung ---------- */
+function bauSteuerung(){
+  const sel=document.getElementById("ort");
+  ORTE.forEach((o,i)=>{
+    const opt=document.createElement("option");
+    opt.value=i; opt.textContent=o.n; sel.appendChild(opt);
+  });
+  sel.addEventListener("change",()=>{state.ort=ORTE[sel.value];start();});
+
+  const arten=document.getElementById("arten");
+  Object.entries(ARTEN).forEach(([k,a])=>{
+    const b=document.createElement("button");
+    b.className="art"; b.type="button"; b.textContent=a.n;
+    b.setAttribute("aria-pressed",String(k===state.art));
+    b.addEventListener("click",()=>{
+      state.art=k;
+      arten.querySelectorAll(".art").forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      if(state.daten)zeichnen(rechnen(state.daten));
+    });
+    arten.appendChild(b);
+  });
+
+  document.getElementById("wasser").addEventListener("change",e=>{
+    const v=parseFloat(e.target.value);
+    state.wasserManuell=isNaN(v)?null:v;
+    if(state.daten)zeichnen(rechnen(state.daten));
+  });
+
+  document.getElementById("standort").addEventListener("click",()=>{
+    if(!navigator.geolocation){meldung("Standort nicht verfügbar","Der Browser gibt keine Position her. Wähle ein Gewässer aus der Liste.");return;}
+    navigator.geolocation.getCurrentPosition(p=>{
+      state.ort={n:"Eigener Standort",lat:p.coords.latitude,lon:p.coords.longitude,pegel:null};
+      document.getElementById("ort").selectedIndex=-1;
+      start();
+    },()=>meldung("Standort abgelehnt","Ohne Freigabe bleibt es bei der Auswahlliste."));
+  });
+
+  const ul=document.getElementById("gewichte");
+  const art=ARTEN[state.art];
+  GEWICHT_TEXT.forEach(([k,titel,text])=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<b>${titel}</b> <em data-gw="${k}">${Math.round(art.gw[k]*100)} %</em><p>${text}</p>`;
+    ul.appendChild(li);
+  });
+}
+function gewichteAktualisieren(){
+  const art=ARTEN[state.art];
+  document.querySelectorAll("[data-gw]").forEach(e=>e.textContent=Math.round(art.gw[e.dataset.gw]*100)+" %");
+}
+
+function meldung(titel,text){
+  document.getElementById("inhalt").innerHTML=`<div class="zustand"><b>${titel}</b>${text}</div>`;
+}
+
+async function pegelZeile(){
+  const z=document.getElementById("ortszeile");
+  const p=await pegelLaden(state.ort.pegel);
+  const basis=`${state.ort.n} · ${state.ort.lat.toFixed(3)}, ${state.ort.lon.toFixed(3)}`;
+  if(!p){z.innerHTML=basis;return;}
+  const richtung=p.delta>3?"steigt":p.delta<-3?"fällt":"steht";
+  z.innerHTML=`${basis} · Pegel ${p.station.toLowerCase()}: <strong>${num(p.wert)} cm</strong>, ${richtung} (${p.delta>0?"+":""}${num(p.delta)} cm in 24 h)`;
+}
+
+async function start(){
+  meldung("Daten werden geladen","Sieben Tage stündliches Wetter für "+state.ort.n+".");
+  document.getElementById("ortszeile").textContent=state.ort.n;
+  try{
+    state.daten=await laden();
+    zeichnen(rechnen(state.daten));
+    gewichteAktualisieren();
+    pegelZeile();
+  }catch(e){
+    meldung("Wetterdaten kamen nicht an", e.message+". Lade die Seite neu oder prüfe die Internetverbindung – die Seite holt ihre Daten live von api.open-meteo.com.");
+  }
+}
+
+let resizeTimer=null;
+window.addEventListener("resize",()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(state.daten)zeichnen(rechnen(state.daten));},250);});
+
+bauSteuerung();
+document.getElementById("arten").addEventListener("click",()=>setTimeout(gewichteAktualisieren,0));
+start();
+</script>
+</body>
+</html>
