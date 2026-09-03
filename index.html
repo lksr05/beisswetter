@@ -242,6 +242,7 @@ const ORTE = [
   {n:"Breisach am Rhein",               lat:48.030, lon:7.578, pegel:"BREISACH", typ:"fluss"},
   {n:"Altrhein Hartheim – Fessenheim",  lat:47.918, lon:7.545, pegel:"BREISACH", typ:"altrhein"},
   {n:"Kembs / Petite Camargue (F)",     lat:47.687, lon:7.505, pegel:null, typ:"baggersee"},
+  {n:"Hardtsee (Ubstadt-Weiher)",       lat:49.170, lon:8.609, pegel:null, typ:"baggersee", quelle:"https://www.scubw.de/wetter.html", quelleName:"Wetterstation Surfclub Ubstadt-Weiher (vor Ort)"},
 ];
 
 /* ---------- Gewässertypen ---------- */
@@ -838,9 +839,12 @@ async function pegelZeile(){
   const z=document.getElementById("ortszeile");
   const p=await pegelLaden(state.ort.pegel);
   const basis=`${state.ort.n} · ${state.ort.lat.toFixed(3)}, ${state.ort.lon.toFixed(3)}`;
-  if(!p){z.innerHTML=basis;return;}
+  const quelle=state.ort.quelle
+    ?` · <a href="${state.ort.quelle}" target="_blank" rel="noopener">${state.ort.quelleName||"Live-Wetterstation vor Ort"} ↗</a>`
+    :"";
+  if(!p){z.innerHTML=basis+quelle;return;}
   const richtung=p.delta>3?"steigt":p.delta<-3?"fällt":"steht";
-  z.innerHTML=`${basis} · Pegel ${p.station.toLowerCase()}: <strong>${num(p.wert)} cm</strong>, ${richtung} (${p.delta>0?"+":""}${num(p.delta)} cm in 24 h)`;
+  z.innerHTML=`${basis} · Pegel ${p.station.toLowerCase()}: <strong>${num(p.wert)} cm</strong>, ${richtung} (${p.delta>0?"+":""}${num(p.delta)} cm in 24 h)${quelle}`;
 }
 
 async function start(){
