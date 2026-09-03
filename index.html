@@ -43,11 +43,25 @@ header{padding:2.6rem 0 1.4rem}
 h1{font-size:clamp(2rem,7vw,3.1rem);line-height:1.05}
 .untertitel{color:var(--gedaempft);max-width:46ch;margin:.7rem 0 0;font-size:1.02rem}
 
+.skala{margin:1.9rem 0 0;max-width:34rem}
+.skala-titel{display:block;font-family:var(--serif);font-size:.98rem;color:var(--nebel);margin-bottom:.55rem}
+.skala-balken{
+  height:.5rem;border-radius:999px;
+  background:linear-gradient(90deg,#b05f45 0%,#b05f45 28%,#d9a441 30%,#d9a441 58%,#8fc77e 60%,#5fbf9b 76%,#5fbf9b 100%);
+}
+.skala-marken{display:flex;justify-content:space-between;gap:1rem;margin-top:.6rem;font-size:.84rem;color:var(--gedaempft)}
+.skala-marken span{display:flex;flex-direction:column;gap:.15rem}
+.skala-marken span:first-child{text-align:left}
+.skala-marken span:nth-child(2){text-align:center}
+.skala-marken span:last-child{text-align:right}
+.skala-marken span b{font-weight:600;font-size:.86rem}
+.skala-fussnote{margin:.7rem 0 0;font-size:.82rem;color:var(--gedaempft)}
+
 /* Steuerleiste */
 .steuer{
   display:flex;flex-wrap:wrap;gap:.7rem;align-items:flex-end;
   border-top:1px solid var(--kante);border-bottom:1px solid var(--kante);
-  padding:1rem 0;margin:1.6rem 0 0;
+  padding:1rem 0;margin:2.1rem 0 0;
 }
 .feld{display:flex;flex-direction:column;gap:.28rem;min-width:0}
 .feld label{font-size:.8rem;color:var(--gedaempft);letter-spacing:.01em}
@@ -68,6 +82,13 @@ button:hover{border-color:var(--welle)}
   padding:.34rem .82rem;font-size:.9rem;color:var(--gedaempft);min-height:0;
 }
 .art[aria-pressed=true]{background:var(--schilf);border-color:var(--schilf);color:#20180a;font-weight:600}
+
+.typenzeile{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;padding:.55rem 0 0}
+.typenlabel{font-size:.8rem;color:var(--gedaempft)}
+.typenzeile .arten{padding:0}
+.wasserhinweis{font-size:.83rem;color:var(--gedaempft);margin:.5rem 0 0}
+.wasserhinweis .gemessen{color:var(--welle)}
+.wasserhinweis .geschaetzt{color:var(--gedaempft)}
 
 .ortszeile{color:var(--gedaempft);font-size:.87rem;padding:.75rem 0 0}
 .ortszeile strong{color:var(--nebel);font-weight:600}
@@ -103,9 +124,17 @@ button:hover{border-color:var(--welle)}
 
 .detail{display:none;padding:.2rem .2rem 1.5rem}
 .tag[data-offen=true] .detail{display:block}
-.stunden{display:flex;align-items:flex-end;gap:2px;height:5.5rem;margin:.4rem 0 .3rem}
-.stunden div{flex:1;border-radius:1px 1px 0 0;min-height:2px}
-.stundenachse{display:flex;justify-content:space-between;color:var(--gedaempft);font-size:.74rem;font-variant-numeric:tabular-nums}
+.stunden-wrap{position:relative;margin:.5rem 0 .3rem}
+.stunden{display:flex;align-items:flex-end;gap:2px;height:5.5rem;position:relative;z-index:1}
+.stunden div{flex:1;border-radius:1px 1px 0 0;min-height:2px;position:relative}
+.spitzenlinie{position:absolute;left:0;right:0;border-top:1px dashed rgba(255,255,255,.4);pointer-events:none;z-index:5}
+.spitzenlinie span{position:absolute;right:0;top:-.85rem;font-size:.72rem;color:var(--nebel);font-variant-numeric:tabular-nums;background:var(--wasser);padding:0 .3rem 0 .15rem;border-radius:2px;box-shadow:0 0 0 3px var(--wasser)}
+.spitzenlinie.tief{border-top-color:rgba(255,255,255,.55)}
+.spitzenlinie.tief span{top:auto;bottom:-.85rem}
+.balkenwert{position:absolute;left:50%;transform:translateX(-50%);font-size:.72rem;font-variant-numeric:tabular-nums;white-space:nowrap;z-index:6;background:var(--wasser);padding:0 .3rem;border-radius:2px}
+.balkenwert.hoch{bottom:calc(100% + .2rem);color:var(--nebel);font-weight:600}
+.balkenwert.tief{bottom:calc(100% + .2rem);color:var(--gedaempft)}
+.stundenachse{display:flex;justify-content:space-between;color:var(--gedaempft);font-size:.74rem;font-variant-numeric:tabular-nums;margin-top:.35rem}
 .werte{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:.1rem 1.4rem;margin-top:1.1rem}
 .wert{display:flex;justify-content:space-between;gap:.8rem;padding:.32rem 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:.9rem}
 .wert span:first-child{color:var(--gedaempft)}
@@ -145,6 +174,17 @@ button:hover{border-color:var(--welle)}
   <h1>Beißwetter am Oberrhein</h1>
   <p class="untertitel">Sieben Tage Wetter für Altrhein, Baggerseen und Strom – umgerechnet in eine Einschätzung, wann sich das Losfahren lohnt.</p>
 
+  <div class="skala">
+    <span class="skala-titel">Skala 0–100</span>
+    <div class="skala-balken" aria-hidden="true"></div>
+    <div class="skala-marken">
+      <span><b style="color:#b05f45">0–30</b> lieber lassen</span>
+      <span><b style="color:#d9a441">30–60</b> zäh bis solide</span>
+      <span><b style="color:#5fbf9b">75–100</b> guter Tag</span>
+    </div>
+    <p class="skala-fussnote">Kein Messwert, sondern ein Modell aus Wetterdaten – Erklärung weiter unten.</p>
+  </div>
+
   <div class="steuer">
     <div class="feld breit">
       <label for="ort">Gewässer</label>
@@ -161,6 +201,13 @@ button:hover{border-color:var(--welle)}
   </div>
 
   <div class="arten" id="arten" role="group" aria-label="Zielfisch"></div>
+
+  <div class="typenzeile">
+    <span class="typenlabel">Gewässertyp</span>
+    <div class="arten" id="typen" role="group" aria-label="Gewässertyp"></div>
+  </div>
+  <p class="wasserhinweis" id="wasserhinweis"></p>
+
   <p class="ortszeile" id="ortszeile"></p>
 </header>
 
@@ -181,20 +228,51 @@ button:hover{border-color:var(--welle)}
 "use strict";
 
 /* ---------- Gewässer ---------- */
+// typ: fluss = Hauptstrom, altrhein = Nebenarm/Altarm mit Anschluss, baggersee = Stillgewässer
 const ORTE = [
-  {n:"Altrhein Plittersdorf / Rastatt", lat:48.905, lon:8.117, pegel:"PLITTERSDORF"},
-  {n:"Altrhein Neupotz – Wörth",        lat:49.083, lon:8.281, pegel:"MAXAU"},
-  {n:"Rhein Karlsruhe-Maxau",           lat:49.039, lon:8.306, pegel:"MAXAU"},
-  {n:"Rhein Speyer",                    lat:49.317, lon:8.437, pegel:"SPEYER"},
-  {n:"Rheinau – Freistett",             lat:48.667, lon:7.928, pegel:"KEHL-KRONENHOF"},
-  {n:"Taubergießen / Rust",             lat:48.263, lon:7.727, pegel:null},
-  {n:"Rhinau (F)",                      lat:48.324, lon:7.706, pegel:null},
-  {n:"Plobsheim / Stausee (F)",         lat:48.478, lon:7.717, pegel:null},
-  {n:"Lauterbourg (F)",                 lat:48.972, lon:8.183, pegel:"MAXAU"},
-  {n:"Breisach am Rhein",               lat:48.030, lon:7.578, pegel:"BREISACH"},
-  {n:"Altrhein Hartheim – Fessenheim",  lat:47.918, lon:7.545, pegel:"BREISACH"},
-  {n:"Kembs / Petite Camargue (F)",     lat:47.687, lon:7.505, pegel:null},
+  {n:"Altrhein Plittersdorf / Rastatt", lat:48.905, lon:8.117, pegel:"PLITTERSDORF", typ:"altrhein"},
+  {n:"Altrhein Neupotz – Wörth",        lat:49.083, lon:8.281, pegel:"MAXAU",        typ:"altrhein"},
+  {n:"Rhein Karlsruhe-Maxau",           lat:49.039, lon:8.306, pegel:"MAXAU",        typ:"fluss"},
+  {n:"Rhein Speyer",                    lat:49.317, lon:8.437, pegel:"SPEYER",       typ:"fluss"},
+  {n:"Rheinau – Freistett",             lat:48.667, lon:7.928, pegel:"KEHL-KRONENHOF", typ:"fluss"},
+  {n:"Taubergießen / Rust",             lat:48.263, lon:7.727, pegel:null, typ:"altrhein"},
+  {n:"Rhinau (F)",                      lat:48.324, lon:7.706, pegel:null, typ:"fluss"},
+  {n:"Plobsheim / Stausee (F)",         lat:48.478, lon:7.717, pegel:null, typ:"baggersee"},
+  {n:"Lauterbourg (F)",                 lat:48.972, lon:8.183, pegel:"MAXAU", typ:"fluss"},
+  {n:"Breisach am Rhein",               lat:48.030, lon:7.578, pegel:"BREISACH", typ:"fluss"},
+  {n:"Altrhein Hartheim – Fessenheim",  lat:47.918, lon:7.545, pegel:"BREISACH", typ:"altrhein"},
+  {n:"Kembs / Petite Camargue (F)",     lat:47.687, lon:7.505, pegel:null, typ:"baggersee"},
 ];
+
+/* ---------- Gewässertypen ---------- */
+// Wirkt auf die Wassertemperatur-Approximation: Stillwasser reagiert schneller auf Luft
+// (weniger Volumen/Durchmischung) und läuft im Jahresverlauf wärmer im Sommer, kühler im Winterkern.
+const TYPEN = {
+  fluss:     {n:"Fluss / Strom",        smooth:0.15, amp_sommer:0,   amp_winter:0},
+  altrhein:  {n:"Altrhein / Nebenarm",  smooth:0.30, amp_sommer:1.6, amp_winter:0.7},
+  baggersee: {n:"Baggersee / Stillwasser", smooth:0.42, amp_sommer:3.2, amp_winter:1.3},
+};
+
+/* ---------- WT-Messstationen (reale Koordinaten, für Distanzangabe & nächstgelegene Station) ---------- */
+const STATIONEN = {
+  PLITTERSDORF:   {lat:48.831, lon:8.101},
+  MAXAU:          {lat:49.039, lon:8.306},
+  SPEYER:         {lat:49.317, lon:8.437},
+  "KEHL-KRONENHOF":{lat:48.573, lon:7.809},
+  RHEINWEILER:    {lat:47.685, lon:7.548},
+  BREISACH:       {lat:48.030, lon:7.578},
+};
+function haversineKm(a,b){
+  const R=6371, toRad=x=>x*Math.PI/180;
+  const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
+  const s=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function stationenNachDistanz(lat,lon){
+  return Object.keys(STATIONEN)
+    .map(code=>({code, km:haversineKm({lat,lon},STATIONEN[code])}))
+    .sort((a,b)=>a.km-b.km);
+}
 
 /* ---------- Zielfische ---------- */
 const ARTEN = {
@@ -318,7 +396,7 @@ function mondWert(zeit,phase){
 }
 
 /* ---------- Zustand ---------- */
-let state={ort:ORTE[0], art:"hecht", wasserManuell:null, daten:null};
+let state={ort:ORTE[0], art:"hecht", typ:ORTE[0].typ, wasserManuell:null, daten:null, wtAnker:null};
 
 /* ---------- Daten holen ---------- */
 async function laden(){
@@ -335,11 +413,28 @@ async function laden(){
   return r.json();
 }
 
+// PEGELONLINE ist offiziell für Browser-/JS-Zugriff gedacht, sollte also direkt gehen.
+// Falls die direkte Anfrage trotzdem an CORS scheitert (z.B. abweichende Deployment-Umgebung),
+// versucht diese Funktion denselben Request über einen öffentlichen CORS-Proxy als Fallback.
+// PEGELONLINE-Daten sind offene, anonyme Behördendaten - unkritisch für einen Umweg über Dritte.
+async function fetchMitProxyFallback(url){
+  try{
+    const r=await fetch(url);
+    if(r.ok)return r;
+  }catch(e){ /* vermutlich CORS - weiter zum Proxy */ }
+  try{
+    const proxyUrl="https://api.allorigins.win/raw?url="+encodeURIComponent(url);
+    const r2=await fetch(proxyUrl);
+    if(r2.ok)return r2;
+  }catch(e){ /* Proxy ebenfalls nicht erreichbar */ }
+  return null;
+}
+
 async function pegelLaden(station){
   if(!station)return null;
   try{
-    const r=await fetch(`https://pegelonline.wsv.de/webservices/rest-api/v2/stations/${station}/W/measurements.json?start=P2D`);
-    if(!r.ok)return null;
+    const r=await fetchMitProxyFallback(`https://pegelonline.wsv.de/webservices/rest-api/v2/stations/${station}/W/measurements.json?start=P2D`);
+    if(!r)return null;
     const m=await r.json();
     if(!Array.isArray(m)||m.length<2)return null;
     const jetzt=m[m.length-1], vor=m[Math.max(0,m.length-49)];
@@ -347,23 +442,77 @@ async function pegelLaden(station){
   }catch(e){return null;}
 }
 
+async function wassertempLaden(station){
+  if(!station)return null;
+  try{
+    const r=await fetchMitProxyFallback(`https://pegelonline.wsv.de/webservices/rest-api/v2/stations/${station}/WT/measurements.json?start=P3D`);
+    if(!r)return null;
+    const m=await r.json();
+    if(!Array.isArray(m)||!m.length)return null;
+    const letzte=m.slice(-8); // letzte ~2 Stunden glätten, Rohdaten sind ungeprüft
+    const wert=letzte.reduce((a,b)=>a+b.value,0)/letzte.length;
+    const jetzt=m[m.length-1];
+    return {station, wert, zeit:new Date(jetzt.timestamp)};
+  }catch(e){return null;}
+}
+
+// Probiert die nächstgelegenen WT-Stationen der Reihe nach durch, falls die nächste
+// keine (aktuelle) Wassertemperatur führt - z.B. weil sie nur Wasserstand misst.
+async function wassertempAnkerFinden(lat,lon,maxKandidaten=4){
+  const kandidaten=stationenNachDistanz(lat,lon).slice(0,maxKandidaten);
+  for(const {code} of kandidaten){
+    const ergebnis=await wassertempLaden(code);
+    if(ergebnis)return ergebnis;
+  }
+  return null;
+}
+
 /* ---------- Modell ---------- */
+function tagDesJahres(d){
+  const start=new Date(d.getFullYear(),0,0);
+  return Math.floor((d-start)/86400000);
+}
+function saisonOffset(datum,typ){
+  const t=TYPEN[typ]||TYPEN.fluss;
+  const tag=tagDesJahres(datum);
+  const saison=Math.cos((tag-199)/365*2*Math.PI); // +1 Hochsommer (~18. Juli), -1 Tiefwinter
+  return saison>=0 ? saison*t.amp_sommer : saison*t.amp_winter;
+}
+
 function rechnen(d){
   const art=ARTEN[state.art];
   const H=d.hourly, D=d.daily;
   const zeiten=H.time.map(t=>new Date(t));
   const heute=new Date(); heute.setHours(0,0,0,0);
   const start=zeiten.findIndex(t=>t>=heute);
+  const tagIndexHeute0=D.time.findIndex(t=>t===H.time[start].slice(0,10));
 
-  // Wassertemperatur schätzen: gedämpfter gleitender Mittelwert der Lufttemperatur
+  // Wassertemperatur: Fluss-Basisreihe per gedämpftem EMA aus der Lufttemperatur, verankert
+  // an einem echten WT-Messwert von PEGELONLINE, wenn einer vorliegt. Sonst Drei-Tage-Startwert.
   const tagesmittel=D.temperature_2m_mean;
-  const wasserReihe=[];
-  let w=tagesmittel.slice(0,3).reduce((a,b)=>a+b,0)/3;
-  for(let i=0;i<tagesmittel.length;i++){
-    w=w+0.20*(tagesmittel[i]-w);
-    wasserReihe.push(Math.max(1.5,Math.min(28,w)));
+  const typ=state.typ;
+  const smooth=(TYPEN[typ]||TYPEN.fluss).smooth;
+  const anker=state.wtAnker; // {wert, zeit, station} oder null
+  const wasserReihe=new Array(tagesmittel.length);
+  let startWert=anker?anker.wert:tagesmittel.slice(0,3).reduce((a,b)=>a+b,0)/3;
+  let ankerIndex=tagIndexHeute0;
+  if(anker){
+    const iso=anker.zeit.toISOString().slice(0,10);
+    const gefunden=D.time.indexOf(iso);
+    if(gefunden>=0)ankerIndex=gefunden;
   }
-  const tagIndexHeute=D.time.findIndex(t=>t===H.time[start].slice(0,10));
+  wasserReihe[ankerIndex]=startWert;
+  let w=startWert;
+  for(let i=ankerIndex+1;i<tagesmittel.length;i++){
+    w=w+smooth*(tagesmittel[i]-w);
+    wasserReihe[i]=Math.max(0.5,Math.min(30,w));
+  }
+  w=startWert;
+  for(let i=ankerIndex-1;i>=0;i--){
+    w=w+smooth*(tagesmittel[i]-w);
+    wasserReihe[i]=Math.max(0.5,Math.min(30,w));
+  }
+  const tagIndexHeute=tagIndexHeute0;
 
   const tage=[];
   for(let k=0;k<7;k++){
@@ -371,7 +520,7 @@ function rechnen(d){
     if(di>=D.time.length)break;
     const datum=new Date(D.time[di]+"T12:00:00");
     const auf=new Date(D.sunrise[di]), unter=new Date(D.sunset[di]);
-    const wassertemp=state.wasserManuell!=null?state.wasserManuell:wasserReihe[di];
+    const wassertemp=state.wasserManuell!=null?state.wasserManuell:Math.max(0.5,Math.min(30,wasserReihe[di]+saisonOffset(datum,typ)));
     const phase=mondphase(datum);
 
     const sprung=di>0?D.temperature_2m_mean[di]-D.temperature_2m_mean[di-1]:0;
@@ -525,6 +674,8 @@ function zeichnen(tage){
     const c=farbe(t.score);
     const f=t.fenster;
     const ende=new Date(f[1].getTime()+3600000);
+    const tHoch=t.stunden.reduce((a,b)=>b.s>a.s?b:a);
+    const tTief=t.stunden.reduce((a,b)=>b.s<a.s?b:a);
     html+=`<article class="tag" data-i="${i}" data-offen="false">
       <button class="tagkopf" type="button" aria-expanded="false">
         <span class="pegelbalken"><i style="height:${t.score}%;background:${c}"></i></span>
@@ -539,7 +690,15 @@ function zeichnen(tage){
         </span>
       </button>
       <div class="detail">
-        <div class="stunden">${t.stunden.map(s=>`<div style="height:${Math.max(3,s.s)}%;background:${farbe(s.s)};opacity:${s.s<25?.45:.9}" title="${s.h}:00 – ${Math.round(s.s)}"></div>`).join("")}</div>
+        <div class="stunden-wrap">
+          <div class="spitzenlinie" style="bottom:${Math.max(3,tHoch.s)}%"><span>${Math.round(tHoch.s)}</span></div>
+          <div class="spitzenlinie tief" style="bottom:${Math.max(3,tTief.s)}%"><span>${Math.round(tTief.s)}</span></div>
+          <div class="stunden">${t.stunden.map(s=>{
+            const istHoch=s===tHoch, istTief=s===tTief && s!==tHoch;
+            const marke=istHoch?`<span class="balkenwert hoch">${Math.round(s.s)}</span>`:istTief?`<span class="balkenwert tief">${Math.round(s.s)}</span>`:"";
+            return `<div style="height:${Math.max(3,s.s)}%;background:${farbe(s.s)};opacity:${s.s<25?.45:.9}" title="${s.h}:00 – ${Math.round(s.s)}">${marke}</div>`;
+          }).join("")}</div>
+        </div>
         <div class="stundenachse"><span>0</span><span>6</span><span>12</span><span>18</span><span>23 Uhr</span></div>
         <p class="fenster">Beste Zeit am ${t.datum.toLocaleDateString("de-DE",{weekday:"long"})}: <b>${f[0].getHours()}–${ende.getHours()} Uhr</b> · Sonne ${t.auf.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} bis ${t.unter.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}</p>
         <div class="werte">
@@ -548,7 +707,8 @@ function zeichnen(tage){
           <div class="wert"><span>Wind</span><span>${himmelsrichtung(t.wri)} ${num(t.windmax)} km/h</span></div>
           <div class="wert"><span>Böen</span><span>${num(t.boe)} km/h</span></div>
           <div class="wert"><span>Niederschlag</span><span>${num(t.regen,1)} mm · ${num(t.regenP)} %</span></div>
-          <div class="wert"><span>Wasser geschätzt</span><span>${num(t.wassertemp,1)} °C</span></div>
+          <div class="wert"><span>Wasser${state.wtAnker&&state.wasserManuell==null?" (verankert)":state.wasserManuell!=null?" (eigen)":" (geschätzt)"}</span><span>${num(t.wassertemp,1)} °C</span></div>
+          <div class="wert"><span>Gewässertyp</span><span>${(TYPEN[state.typ]||TYPEN.fluss).n}</span></div>
           <div class="wert"><span>Temperatursprung</span><span>${t.sprung>0?"+":""}${num(t.sprung,1)} K</span></div>
           <div class="wert"><span>Mond</span><span>${num(t.phase*100)} % im Zyklus</span></div>
           <div class="wert"><span>Optimum ${art.n}</span><span>${art.wOpt[0]}–${art.wOpt[1]} °C</span></div>
@@ -583,7 +743,12 @@ function bauSteuerung(){
     const opt=document.createElement("option");
     opt.value=i; opt.textContent=o.n; sel.appendChild(opt);
   });
-  sel.addEventListener("change",()=>{state.ort=ORTE[sel.value];start();});
+  sel.addEventListener("change",()=>{
+    state.ort=ORTE[sel.value];
+    state.typ=state.ort.typ;
+    typenAktualisieren();
+    start();
+  });
 
   const arten=document.getElementById("arten");
   Object.entries(ARTEN).forEach(([k,a])=>{
@@ -599,16 +764,33 @@ function bauSteuerung(){
     arten.appendChild(b);
   });
 
+  const typen=document.getElementById("typen");
+  Object.entries(TYPEN).forEach(([k,t])=>{
+    const b=document.createElement("button");
+    b.className="art"; b.type="button"; b.textContent=t.n; b.dataset.typ=k;
+    b.setAttribute("aria-pressed",String(k===state.typ));
+    b.addEventListener("click",()=>{
+      state.typ=k;
+      typen.querySelectorAll(".art").forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      if(state.daten){zeichnen(rechnen(state.daten));wasserhinweisAktualisieren();}
+    });
+    typen.appendChild(b);
+  });
+
   document.getElementById("wasser").addEventListener("change",e=>{
     const v=parseFloat(e.target.value);
     state.wasserManuell=isNaN(v)?null:v;
     if(state.daten)zeichnen(rechnen(state.daten));
+    wasserhinweisAktualisieren();
   });
 
   document.getElementById("standort").addEventListener("click",()=>{
     if(!navigator.geolocation){meldung("Standort nicht verfügbar","Der Browser gibt keine Position her. Wähle ein Gewässer aus der Liste.");return;}
     navigator.geolocation.getCurrentPosition(p=>{
-      state.ort={n:"Eigener Standort",lat:p.coords.latitude,lon:p.coords.longitude,pegel:null};
+      state.ort={n:"Eigener Standort",lat:p.coords.latitude,lon:p.coords.longitude,pegel:null,typ:"fluss"};
+      state.typ="fluss";
+      typenAktualisieren();
       document.getElementById("ort").selectedIndex=-1;
       start();
     },()=>meldung("Standort abgelehnt","Ohne Freigabe bleibt es bei der Auswahlliste."));
@@ -625,6 +807,27 @@ function bauSteuerung(){
 function gewichteAktualisieren(){
   const art=ARTEN[state.art];
   document.querySelectorAll("[data-gw]").forEach(e=>e.textContent=Math.round(art.gw[e.dataset.gw]*100)+" %");
+}
+function typenAktualisieren(){
+  document.querySelectorAll("#typen .art").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.typ===state.typ)));
+}
+function wasserhinweisAktualisieren(){
+  const el=document.getElementById("wasserhinweis");
+  if(!el)return;
+  if(state.wasserManuell!=null){
+    el.innerHTML=`Eigener Wert eingetragen: <b>${num(state.wasserManuell,1)} °C</b>, überschreibt die Schätzung.`;
+    return;
+  }
+  const a=state.wtAnker;
+  if(a){
+    const alterMin=Math.round((Date.now()-a.zeit.getTime())/60000);
+    const station=STATIONEN[a.station];
+    const distanz=station?haversineKm({lat:state.ort.lat,lon:state.ort.lon},station):(state.ort.ankerDistanzKm??null);
+    const distanzText=distanz!=null?`, ${distanz<1?"an der Station selbst":"rund "+Math.round(distanz)+" km entfernt"}`:"";
+    el.innerHTML=`Verankert an <span class="gemessen">gemessener</span> Wassertemperatur der WSV-Station ${a.station.toLowerCase()}${distanzText}: ${num(a.wert,1)} °C, vor ${alterMin<90?alterMin+" min":Math.round(alterMin/60)+" h"}. Restliche Tage <span class="geschaetzt">geschätzt</span> aus dem Luftwetter und dem Gewässertyp.`;
+  }else{
+    el.innerHTML=`Keine Messstation in der Nähe – Wassertemperatur komplett <span class="geschaetzt">geschätzt</span> aus dem Luftwetter und dem Gewässertyp.`;
+  }
 }
 
 function meldung(titel,text){
@@ -644,9 +847,13 @@ async function start(){
   meldung("Daten werden geladen","Sieben Tage stündliches Wetter für "+state.ort.n+".");
   document.getElementById("ortszeile").textContent=state.ort.n;
   try{
-    state.daten=await laden();
+    const [daten,anker]=await Promise.all([laden(), wassertempAnkerFinden(state.ort.lat,state.ort.lon)]);
+    state.daten=daten;
+    state.wtAnker=anker;
     zeichnen(rechnen(state.daten));
     gewichteAktualisieren();
+    typenAktualisieren();
+    wasserhinweisAktualisieren();
     pegelZeile();
   }catch(e){
     meldung("Wetterdaten kamen nicht an", e.message+". Lade die Seite neu oder prüfe die Internetverbindung – die Seite holt ihre Daten live von api.open-meteo.com.");
